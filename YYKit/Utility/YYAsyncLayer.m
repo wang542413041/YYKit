@@ -116,13 +116,19 @@ static dispatch_queue_t YYAsyncLayerGetReleaseQueue() {
         return;
     }
     
+    // 异步绘制核心代码
     if (async) {
         if (task.willDisplay) task.willDisplay(self);
+        
+        // 绘制任务队列
         YYSentinel *sentinel = _sentinel;
         int32_t value = sentinel.value;
+        // 判断绘制任务是否已取消
         BOOL (^isCancelled)() = ^BOOL() {
             return value != sentinel.value;
         };
+        
+        // 清除不合法绘制
         CGSize size = self.bounds.size;
         BOOL opaque = self.opaque;
         CGFloat scale = self.contentsScale;
@@ -140,11 +146,13 @@ static dispatch_queue_t YYAsyncLayerGetReleaseQueue() {
             return;
         }
         
+        // 获取位图进行绘制
         dispatch_async(YYAsyncLayerGetDisplayQueue(), ^{
             if (isCancelled()) {
                 CGColorRelease(backgroundColor);
                 return;
             }
+            // 获取位图进行绘制
             UIGraphicsBeginImageContextWithOptions(size, opaque, scale);
             CGContextRef context = UIGraphicsGetCurrentContext();
             if (opaque && context) {
@@ -182,6 +190,7 @@ static dispatch_queue_t YYAsyncLayerGetReleaseQueue() {
                 if (isCancelled()) {
                     if (task.didDisplay) task.didDisplay(self, NO);
                 } else {
+                    // 提交渲染成果
                     self.contents = (__bridge id)(image.CGImage);
                     if (task.didDisplay) task.didDisplay(self, YES);
                 }
